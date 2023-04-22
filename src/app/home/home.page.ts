@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { RefresherCustomEvent } from '@ionic/angular';
+import { AlertController, RefresherCustomEvent, ToastController } from '@ionic/angular';
 import { MessageComponent } from '../message/message.component';
 
 import { DataService, Message } from '../services/data.service';
@@ -10,16 +10,48 @@ import { DataService, Message } from '../services/data.service';
   styleUrls: ['home.page.scss'],
 })
 export class HomePage {
-  private data = inject(DataService);
-  constructor() {}
+  shoppingList = JSON.parse(localStorage.getItem('items')) || [];
+   constructor(private alertController: AlertController,
+    private toastController: ToastController){}
 
-  refresh(ev: any) {
-    setTimeout(() => {
-      (ev as RefresherCustomEvent).detail.complete();
-    }, 3000);
+   async addItem(){
+    const alert = await this.alertController.create({
+      header: 'Neues Element hinzufügen',
+      buttons: [{
+        text: 'Hinzufügen',
+        handler: (textfields) => {
+          this.shoppingList.push(textfields[0]);
+          this.save();
+        }
+      }],
+      inputs: [
+        {
+          placeholder: 'Neues Element',
+        }
+      ],
+    });
+
+    await alert.present();
+  }
+  deleteItem(i){
+    this.shoppingList.splice(i, 1);
+    this.presentToast('Das Element wurde gelöscht!');
+    let itemsAsText = JSON.stringify(this.shoppingList);
+    localStorage.setItem('items', itemsAsText);
+  }
+  save(){
+    this.presentToast('Das Element wurde hinzugefügt!');
+    let itemsAsText = JSON.stringify(this.shoppingList);
+    localStorage.setItem('items', itemsAsText);
   }
 
-  getMessages(): Message[] {
-    return this.data.getMessages();
+  async presentToast(msg) {
+    const toast = await this.toastController.create({
+      message: msg,
+      duration: 1500,
+      position: 'bottom'
+    });
+
+    await toast.present();
   }
 }
